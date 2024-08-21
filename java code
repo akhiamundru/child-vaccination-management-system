@@ -1,0 +1,183 @@
+import java.util.*;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.text.ParseException;
+
+class Child {
+    String name;
+    int age; // Age in months
+    List<String> vaccinations;
+
+    Child(String name, int age) {
+        this.name = name;
+        this.age = age;
+        this.vaccinations = new ArrayList<>();
+    }
+
+    void addVaccination(String vaccination) {
+        vaccinations.add(vaccination);
+    }
+
+    @Override
+    public String toString() {
+        return "Name: " + name + ", Age: " + age + " months";
+    }
+}
+
+class Appointment {
+    Child child;
+    String date;
+    String vaccinationType;
+
+    Appointment(Child child, String date, String vaccinationType) {
+        this.child = child;
+        this.date = date;
+        this.vaccinationType = vaccinationType;
+    }
+
+    @Override
+    public String toString() {
+        return "Appointment for " + child.name + " on " + date + " for " + vaccinationType;
+    }
+}
+
+class VaccinationSystem {
+    Map<String, List<Child>> parentToChildrenMap;
+    List<Appointment> appointments;
+
+    VaccinationSystem() {
+        parentToChildrenMap = new HashMap<>();
+        appointments = new ArrayList<>();
+    }
+
+    void registerParent(String parentName) {
+        if (!parentToChildrenMap.containsKey(parentName)) {
+            parentToChildrenMap.put(parentName, new ArrayList<>());
+            System.out.println("Parent " + parentName + " registered successfully.");
+        } else {
+            System.out.println("Parent already registered.");
+        }
+    }
+
+    void registerChild(String parentName, String childName, int age) {
+        if (parentToChildrenMap.containsKey(parentName)) {
+            Child child = new Child(childName, age);
+            parentToChildrenMap.get(parentName).add(child);
+            System.out.println("Child " + childName + " registered successfully.");
+        } else {
+            System.out.println("Parent not found. Please register the parent first.");
+        }
+    }
+
+    void bookAppointment(String parentName, String childName, String date, String vaccinationType) {
+        List<Child> children = parentToChildrenMap.getOrDefault(parentName, null);
+
+        if (children != null) {
+            for (Child child : children) {
+                if (child.name.equals(childName)) {
+                    Appointment appointment = new Appointment(child, date, vaccinationType);
+                    appointments.add(appointment);
+                    System.out.println("Appointment booked successfully.");
+                    return;
+                }
+            }
+            System.out.println("Child not found.");
+        } else {
+            System.out.println("Parent not found.");
+        }
+    }
+
+    void viewAppointments(String parentName) {
+        System.out.println("Appointments for " + parentName + ":");
+        for (Appointment appointment : appointments) {
+            if (parentToChildrenMap.get(parentName).contains(appointment.child)) {
+                System.out.println(appointment);
+            }
+        }
+    }
+
+    void viewReminders(String parentName) {
+        // For simplicity, assuming appointments within the next 7 days as reminders
+        System.out.println("Reminders for " + parentName + ":");
+        Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.DAY_OF_YEAR, 7); // 7 days from today
+        Date reminderDate = calendar.getTime();
+
+        for (Appointment appointment : appointments) {
+            if (parentToChildrenMap.get(parentName).contains(appointment.child)) {
+                try {
+                    Date appointmentDate = new SimpleDateFormat("dd/MM/yyyy").parse(appointment.date);
+                    if (appointmentDate.before(reminderDate)) {
+                        System.out.println(appointment);
+                    }
+                } catch (ParseException e) {
+                    System.out.println("Error parsing date.");
+                }
+            }
+        }
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        VaccinationSystem system = new VaccinationSystem();
+        Scanner scanner = new Scanner(System.in);
+
+        while (true) {
+            System.out.println("\n1. Register Parent");
+            System.out.println("2. Register Child");
+            System.out.println("3. Book Appointment");
+            System.out.println("4. View Appointments");
+            System.out.println("5. View Reminders");
+            System.out.println("6. Exit");
+
+            int choice = scanner.nextInt();
+            scanner.nextLine(); // Consume newline
+
+            switch (choice) {
+                case 1:
+                    System.out.print("Enter parent name: ");
+                    String parentName = scanner.nextLine();
+                    system.registerParent(parentName);
+                    break;
+                case 2:
+                    System.out.print("Enter parent name: ");
+                    parentName = scanner.nextLine();
+                    System.out.print("Enter child name: ");
+                    String childName = scanner.nextLine();
+                    System.out.print("Enter child age (in months): ");
+                    int age = scanner.nextInt();
+                    scanner.nextLine(); // Consume newline
+                    system.registerChild(parentName, childName, age);
+                    break;
+                case 3:
+                    System.out.print("Enter parent name: ");
+                    parentName = scanner.nextLine();
+                    System.out.print("Enter child name: ");
+                    childName = scanner.nextLine();
+                    System.out.print("Enter appointment date (dd/MM/yyyy): ");
+                    String date = scanner.nextLine();
+                    System.out.print("Enter vaccination type: ");
+                    String vaccinationType = scanner.nextLine();
+                    system.bookAppointment(parentName, childName, date, vaccinationType);
+                    break;
+                case 4:
+                    System.out.print("Enter parent name: ");
+                    parentName = scanner.nextLine();
+                    system.viewAppointments(parentName);
+                    break;
+                case 5:
+                    System.out.print("Enter parent name: ");
+                    parentName = scanner.nextLine();
+                    system.viewReminders(parentName);
+                    break;
+                case 6:
+                    System.out.println("Exiting...");
+                    scanner.close();
+                    return;
+                default:
+                    System.out.println("Invalid choice. Please try again.");
+            }
+        }
+    }
+}
